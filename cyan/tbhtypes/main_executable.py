@@ -76,7 +76,7 @@ class MainExecutable(Executable):
         e.fix_common_dependencies(needed)
         e.fix_dependencies(tweaks, inject_to_path)
         
-        if self.bundle_path.endswith("Swiftgram.app"):
+        if self.bundle_path.endswith("Swiftgram.app") and os.path.exists(f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework"):
           if inject_to_path:
             # Inject directly into @executable_path hehehe
             fpath = f"{self.bundle_path}/{bn}"
