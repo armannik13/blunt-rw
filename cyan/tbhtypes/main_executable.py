@@ -75,19 +75,37 @@ class MainExecutable(Executable):
         e = Executable(path)
         e.fix_common_dependencies(needed)
         e.fix_dependencies(tweaks, inject_to_path)
-
-        if inject_to_path:
-          fpath = f"{self.bundle_path}/{bn}"
-          existed = tbhutils.delete_if_exists(fpath, bn)
-          self.inj_func(f"@executable_path/{bn}", f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework")
-          shutil.copy2(path, self.bundle_path)
-          location = "@executable_path/"
+        
+        if self.bundle_path.endswith("/Swiftgram.app"):
+          if inject_to_path:
+            # Inject directly into @executable_path hehehe
+            fpath = f"{self.bundle_path}/{bn}"
+            existed = tbhutils.delete_if_exists(fpath, bn)
+            self.inj_func(f"@executable_path/{bn}", f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework")
+            shutil.copy2(path, self.bundle_path)
+            location = "@executable_path/"
+          else:
+            # Default zx behavior: inject into @executable_path/Frameworks
+            fpath = f"{FRAMEWORKS_DIR}/{bn}"
+            existed = tbhutils.delete_if_exists(fpath, bn)
+            self.inj_func(f"@rpath/{bn}", f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework")
+            shutil.move(path, FRAMEWORKS_DIR)
+            location = "Frameworks/"
         else:
-          fpath = f"{FRAMEWORKS_DIR}/{bn}"
-          existed = tbhutils.delete_if_exists(fpath, bn)
-          self.inj_func(f"@rpath/{bn}", f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework")
-          shutil.move(path, FRAMEWORKS_DIR)
-          location = "Frameworks/"
+          if inject_to_path:
+            # Inject directly into @executable_path hehehe
+            fpath = f"{self.bundle_path}/{bn}"
+            existed = tbhutils.delete_if_exists(fpath, bn)
+            self.inj_func(f"@executable_path/{bn}")
+            shutil.move(path, self.bundle_path)
+            location = "@executable_path/"
+          else:
+            # Default zx behavior: inject into @executable_path/Frameworks
+            fpath = f"{FRAMEWORKS_DIR}/{bn}"
+            existed = tbhutils.delete_if_exists(fpath, bn)
+            self.inj_func(f"@rpath/{bn}")
+            shutil.move(path, FRAMEWORKS_DIR)
+            location = "Frameworks/"
       elif bn.endswith(".dylib"):
         path = shutil.copy2(path, tmpdir)
 
@@ -215,4 +233,3 @@ class MainExecutable(Executable):
 
     if proc.returncode != 0:
       sys.exit(f"[!] couldn't add LC (insert_dylib), error:\n{proc.stderr}")
-      
