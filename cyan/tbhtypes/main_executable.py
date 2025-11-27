@@ -67,8 +67,11 @@ class MainExecutable(Executable):
     for bn, path in tweaks.items():
       if os.path.islink(path):
         continue  # symlinks can potentially have some security implications
-        
-      target_path = None
+
+      custom_rule = CUSTOM_INJECTIONS.get(bn)
+      if custom_rule and f"Payload/{custom_rule["app_name"]}.app" in self.bundle_path:
+        target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
+
       if bn.endswith(".appex"):
         fpath = f"{PLUGINS_DIR}/{bn}"
         existed = tbhutils.delete_if_exists(fpath, bn)
@@ -80,10 +83,6 @@ class MainExecutable(Executable):
         e = Executable(path)
         e.fix_common_dependencies(needed)
         e.fix_dependencies(tweaks, inject_to_path)
-
-        custom_rule = CUSTOM_INJECTIONS.get(bn)
-        if custom_path and custom_rule and f"/Payload/{custom_rule["app_name"]}.app/{custom_rule["app_name"]}" in self.bundle_path:
-          target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
 
         if inject_to_path:
           # Inject directly into @executable_path hehehe
@@ -108,10 +107,6 @@ class MainExecutable(Executable):
             location = "Frameworks/"
           shutil.move(path, FRAMEWORKS_DIR)
       elif bn.endswith(".framework"):
-        custom_rule = CUSTOM_INJECTIONS.get(bn)
-        if custom_path and custom_rule and f"/Payload/{custom_rule["app_name"]}.app/{custom_rule["app_name"]}" in self.bundle_path:
-          target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
-        
         if inject_to_path:
           # With -p flag, frameworks also go to @executable_path
           fpath = f"{self.bundle_path}/{bn}"
