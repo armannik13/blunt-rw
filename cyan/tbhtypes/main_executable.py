@@ -24,7 +24,7 @@ class MainExecutable(Executable):
     else:
       self.inj_func = self.lief_inject
 
-  def inject(self, tweaks: dict[str, str], tmpdir: str, inject_to_path: bool = False) -> None:
+  def inject(self, tweaks: dict[str, str], tmpdir: str, inject_to_path: bool = False, custom_path: bool = False) -> None:
     ENT_PATH = f"{self.bundle_path}/cyan.entitlements"
     PLUGINS_DIR = f"{self.bundle_path}/PlugIns"
     FRAMEWORKS_DIR = f"{self.bundle_path}/Frameworks"
@@ -81,7 +81,7 @@ class MainExecutable(Executable):
         e.fix_dependencies(tweaks, inject_to_path)
 
         custom_rule = CUSTOM_INJECTIONS.get(bn)
-        if custom_rule and f"Payload/{custom_rule["app_name"]}.app" in self.bundle_path:
+        if custom_path and custom_rule and f"/Payload/{custom_rule["app_name"]}.app/{custom_rule["app_name"]}" in self.bundle_path:
           target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
 
         if inject_to_path:
@@ -108,7 +108,7 @@ class MainExecutable(Executable):
           shutil.move(path, FRAMEWORKS_DIR)
       elif bn.endswith(".framework"):
         custom_rule = CUSTOM_INJECTIONS.get(bn)
-        if custom_rule and f"Payload/{custom_rule["app_name"]}.app" in self.bundle_path:
+        if custom_path and custom_rule and f"/Payload/{custom_rule["app_name"]}.app/{custom_rule["app_name"]}" in self.bundle_path:
           target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
         
         if inject_to_path:
