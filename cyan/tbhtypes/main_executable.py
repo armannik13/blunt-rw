@@ -71,6 +71,8 @@ class MainExecutable(Executable):
       custom_rule = CUSTOM_INJECTIONS.get(bn)
       if custom_path and custom_rule and f"Payload/{custom_rule["app_name"]}.app" in self.bundle_path:
         target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
+      else:
+        target_path = None
 
       if bn.endswith(".appex"):
         fpath = f"{PLUGINS_DIR}/{bn}"
