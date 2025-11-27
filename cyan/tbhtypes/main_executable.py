@@ -57,7 +57,12 @@ class MainExecutable(Executable):
     os.chdir(cwd)  # i fucking hate jailbroken iOS utils.
 
     needed: set[str] = set()
-
+    CUSTOM_INJECTIONS = {
+      "SwiftgramCrack.dylib": {
+          "app_name": "Swiftgram",
+          "target_binary": "Frameworks/TelegramUIFramework.framework/TelegramUIFramework"
+      }
+    }
     # inject/fix user things
     for bn, path in tweaks.items():
       if os.path.islink(path):
@@ -68,44 +73,6 @@ class MainExecutable(Executable):
         existed = tbhutils.delete_if_exists(fpath, bn)
         shutil.copytree(path, fpath)
         location = "PlugIns/"
-      elif bn == "SwiftgramCrack.dylib":
-        # special case for swiftgram crack
-        path = shutil.copy2(path, tmpdir)
-
-        e = Executable(path)
-        e.fix_common_dependencies(needed)
-        e.fix_dependencies(tweaks, inject_to_path)
-        
-        if self.bundle_path.endswith("Swiftgram.app") and os.path.exists(f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework"):
-          if inject_to_path:
-            # Inject directly into @executable_path hehehe
-            fpath = f"{self.bundle_path}/{bn}"
-            existed = tbhutils.delete_if_exists(fpath, bn)
-            self.inj_func(f"@executable_path/{bn}", f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework")
-            shutil.copy2(path, self.bundle_path)
-            location = "@executable_path/"
-          else:
-            # Default zx behavior: inject into @executable_path/Frameworks
-            fpath = f"{FRAMEWORKS_DIR}/{bn}"
-            existed = tbhutils.delete_if_exists(fpath, bn)
-            self.inj_func(f"@rpath/{bn}", f"{FRAMEWORKS_DIR}/TelegramUIFramework.framework/TelegramUIFramework")
-            shutil.move(path, FRAMEWORKS_DIR)
-            location = "Frameworks/"
-        else:
-          if inject_to_path:
-            # Inject directly into @executable_path hehehe
-            fpath = f"{self.bundle_path}/{bn}"
-            existed = tbhutils.delete_if_exists(fpath, bn)
-            self.inj_func(f"@executable_path/{bn}")
-            shutil.move(path, self.bundle_path)
-            location = "@executable_path/"
-          else:
-            # Default zx behavior: inject into @executable_path/Frameworks
-            fpath = f"{FRAMEWORKS_DIR}/{bn}"
-            existed = tbhutils.delete_if_exists(fpath, bn)
-            self.inj_func(f"@rpath/{bn}")
-            shutil.move(path, FRAMEWORKS_DIR)
-            location = "Frameworks/"
       elif bn.endswith(".dylib"):
         path = shutil.copy2(path, tmpdir)
 
@@ -113,35 +80,59 @@ class MainExecutable(Executable):
         e.fix_common_dependencies(needed)
         e.fix_dependencies(tweaks, inject_to_path)
 
+        custom_rule = CUSTOM_INJECTIONS.get(bn)
+        if custom_rule and f"Payload/{custom_rule["app_name"]}.app" in self.bundle_path:
+          target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
+
         if inject_to_path:
           # Inject directly into @executable_path hehehe
           fpath = f"{self.bundle_path}/{bn}"
           existed = tbhutils.delete_if_exists(fpath, bn)
-          self.inj_func(f"@executable_path/{bn}")
+          if target_path and os.path.exists(target_path):
+            self.inj_func(f"@executable_path/{bn}", target_path)
+            location = "@executable_path/ -> " + target_path.replace(self.bundle_path + "/", "")
+          else:
+            self.inj_func(f"@executable_path/{bn}")
+            location = "@executable_path/"
           shutil.move(path, self.bundle_path)
-          location = "@executable_path/"
         else:
           # Default zx behavior: inject into @executable_path/Frameworks
           fpath = f"{FRAMEWORKS_DIR}/{bn}"
           existed = tbhutils.delete_if_exists(fpath, bn)
-          self.inj_func(f"@rpath/{bn}")
+          if target_path and os.path.exists(target_path):
+            self.inj_func(f"@rpath/{bn}", target_path)
+            location = "Frameworks/ -> " + target_path.replace(self.bundle_path + "/", "")
+          else:
+            self.inj_func(f"@rpath/{bn}")
+            location = "Frameworks/"
           shutil.move(path, FRAMEWORKS_DIR)
-          location = "Frameworks/"
       elif bn.endswith(".framework"):
+        custom_rule = CUSTOM_INJECTIONS.get(bn)
+        if custom_rule and f"Payload/{custom_rule["app_name"]}.app" in self.bundle_path:
+          target_path = f"{self.bundle_path}/{custom_rule["target_binary"]}"
+        
         if inject_to_path:
           # With -p flag, frameworks also go to @executable_path
           fpath = f"{self.bundle_path}/{bn}"
           existed = tbhutils.delete_if_exists(fpath, bn)
-          self.inj_func(f"@executable_path/{bn}/{bn[:-10]}")
+          if target_path and os.path.exists(target_path):
+            self.inj_func(f"@executable_path/{bn}/{bn[:-10]}", target_path)
+            location = "@executable_path/ -> " + target_path.replace(self.bundle_path + "/", "")
+          else:
+            self.inj_func(f"@executable_path/{bn}/{bn[:-10]}")
+            location = "@executable_path/"
           shutil.copytree(path, fpath)
-          location = "@executable_path/"
         else:
           # Default zx behavior frameworks go to Frameworks/
           fpath = f"{FRAMEWORKS_DIR}/{bn}"
           existed = tbhutils.delete_if_exists(fpath, bn)
-          self.inj_func(f"@rpath/{bn}/{bn[:-10]}")
+          if target_path and os.path.exists(target_path):
+            self.inj_func(f"@rpath/{bn}/{bn[:-10]}", target_path)
+            location = "Frameworks/ -> " + target_path.replace(self.bundle_path + "/", "")
+          else:
+            self.inj_func(f"@rpath/{bn}/{bn[:-10]}")
+            location = "Frameworks/"
           shutil.copytree(path, fpath)
-          location = "Frameworks/"
       else:
         fpath = f"{self.bundle_path}/{bn}"
         existed = tbhutils.delete_if_exists(fpath, bn)
