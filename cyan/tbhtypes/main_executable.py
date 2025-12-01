@@ -96,7 +96,7 @@ class MainExecutable(Executable):
           else:
             self.inj_func(f"@executable_path/{bn}")
             location = "@executable_path/"
-          shutil.move(path, self.bundle_path)
+          shutil.move(path, fpath)
         else:
           # Default zx behavior: inject into @executable_path/Frameworks
           fpath = f"{FRAMEWORKS_DIR}/{bn}"
@@ -107,7 +107,7 @@ class MainExecutable(Executable):
           else:
             self.inj_func(f"@rpath/{bn}")
             location = "Frameworks/"
-          shutil.move(path, FRAMEWORKS_DIR)
+          shutil.move(path, fpath)
       elif bn.endswith(".framework"):
         if inject_to_path:
           # With -p flag, frameworks also go to @executable_path
@@ -222,3 +222,40 @@ class MainExecutable(Executable):
 
     if proc.returncode != 0:
       sys.exit(f"[!] couldn't add LC (insert_dylib), error:\n{proc.stderr}")
+
+  def patch_plugins(self, tmpdir: str) -> None:
+    FRAMEWORKS_DIR = f"{self.bundle_path}/Frameworks"
+    PLUGINS_DIR = f"{self.bundle_path}/PlugIns"
+    dylib_source = f"{self.install_dir}/extras/zxPluginsInject.dylib"
+    path = shutil.copy2(dylib_source, tmpdir)
+
+    to_inject = "@rpath/zxPluginsInject.dylib"
+    fpath = f"{FRAMEWORKS_DIR}/zxPluginsInject.dylib"
+    shutil.move(path, fpath)
+
+    targets = [self.path]
+
+    PLUGINS_DIR = f"{self.bundle_path}/PlugIns"
+    if os.path.isdir(PLUGINS_DIR):
+      for item in os.listdir(PLUGINS_DIR):
+        if item.endswith(".appex"):
+          appex_path = os.path.join(PLUGINS_DIR, item)
+          binary_name = item[:-6]
+          binary_path = os.path.join(appex_path, binary_name)
+          if os.path.isfile(binary_path):
+            targets.append(binary_path)
+
+    if targets:
+      injected_count = 0
+      for target in targets:
+        if self.is_dylib_already_injected(target, "zxPluginsInject.dylib"):
+          print(f"[?] already patched: {os.path.basename(target)}")
+          continue
+        else:
+          self.inj_func(to_inject, target)
+          print(f"[*] patched {os.path.basename(target)}")
+          injected_count += 1
+      if injected_count == 0:
+        print("[?] all plugins were already patched")
+    else:
+      print("[?] no plugins found to patch")
