@@ -255,6 +255,6 @@ class MainExecutable(Executable):
       if injected_count == 0:
         print("[?] all plugins were already patched")
       else:
-        print(f"[*] patched {injected_count} plugins")
+        print(f"[*] patched \033[96m{injected_count}\033[0m plugin(s)")
     else:
       print("[?] no plugins found to patch")
