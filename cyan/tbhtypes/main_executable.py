@@ -227,15 +227,13 @@ class MainExecutable(Executable):
     FRAMEWORKS_DIR = f"{self.bundle_path}/Frameworks"
     PLUGINS_DIR = f"{self.bundle_path}/PlugIns"
     dylib_source = f"{self.install_dir}/extras/zxPluginsInject.dylib"
-    path = shutil.copy2(dylib_source, tmpdir)
-
     to_inject = "@rpath/zxPluginsInject.dylib"
+    path = shutil.copy2(dylib_source, tmpdir)
     fpath = f"{FRAMEWORKS_DIR}/zxPluginsInject.dylib"
     shutil.move(path, fpath)
 
     targets = [self.path]
 
-    PLUGINS_DIR = f"{self.bundle_path}/PlugIns"
     if os.path.isdir(PLUGINS_DIR):
       for item in os.listdir(PLUGINS_DIR):
         if item.endswith(".appex"):
@@ -249,13 +247,14 @@ class MainExecutable(Executable):
       injected_count = 0
       for target in targets:
         if self.is_dylib_already_injected(target, "zxPluginsInject.dylib"):
-          print(f"[?] already patched: {os.path.basename(target)}")
+          print(f"[?] {os.path.basename(target)} already patched")
           continue
         else:
           self.inj_func(to_inject, target)
-          print(f"[*] patched {os.path.basename(target)}")
           injected_count += 1
       if injected_count == 0:
         print("[?] all plugins were already patched")
+      else:
+        print(f"[*] patched {injected_count} plugins")
     else:
       print("[?] no plugins found to patch")
