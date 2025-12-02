@@ -171,7 +171,7 @@ def generate_cyan(parser: argparse.ArgumentParser) -> None:
     if args.x:
       zf.write(args.x, "new.entitlements")
     
-    if args.custom_dylib and args.patch.plugins:
+    if args.custom_dylib and args.patch_plugins:
       zf.write(args.custom_dylib, f"custom_dylib/{os.path.basename(args.custom_dylib)}")
 
 
