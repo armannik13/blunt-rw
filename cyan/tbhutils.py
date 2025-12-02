@@ -57,6 +57,22 @@ def validate_inputs(args: Namespace) -> Optional[str]:
 
     # i would've modified args.f directly, but it causes type-hinting error :(
     args.f = new
+  
+  if args.patch_plugins is not None:
+    neww: list[str] = []
+    if args.patch_plugins is True:
+      args.patch_plugins = True
+    else:
+      for dylib in list(args.patch_plugins):
+        if dylib[-1] == "/":  # yeah this is stupid
+          dylib = dylib[:-1]
+
+        if not os.path.isfile(dylib):
+          sys.exit(f"[!] {dylib} does not exist")
+
+        neww.append(os.path.realpath(dylib))
+
+    args.patch_plugins = neww
 
   if (
       args.m is not None
@@ -267,4 +283,3 @@ def parse_cyans(args: dict[str, Any], tmpdir: str) -> None:
       # the rest of the config (not the ones above, we `del` them)
       for k, v in config.items():
         args[k] = v
-
