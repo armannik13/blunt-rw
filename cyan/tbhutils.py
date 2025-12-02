@@ -63,8 +63,9 @@ def validate_inputs(args: Namespace) -> Optional[str]:
     if args.patch_plugins is True:
       args.patch_plugins = True
     else:
-      for dylib in list(args.patch_plugins):
-        dylib = os.path.normpath(dylib)
+      for dylib in [args.patch_plugins]:
+        if dylib[-1] == "/":  # yeah this is stupid
+          dylib = dylib[:-1]
 
         if not os.path.isfile(dylib):
           sys.exit(f"[!] {dylib} does not exist")
