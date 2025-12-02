@@ -84,12 +84,12 @@ def main() -> None:
     help="inject dylibs into @executable_path instead of @executable_path/Frameworks"
   )
   parser.add_argument(
-    "-z", "--custom-path", action="store_true",
-    help="use custom tweaks path"
+    "-r", "--patch-plugins", action="store_true",
+    help="patch plugins"
   )
   parser.add_argument(
-    "-r", "--patch-plugins", nargs="?", const=True, default=False, metavar="custom dylib",
-    help="patch plugins"
+    "--custom-dylib", metavar="custom dylib",
+    help="custom dylib to patch plugins"
   )
 
   generate_cyan(parser)
@@ -107,6 +107,8 @@ def generate_cyan(parser: argparse.ArgumentParser) -> None:
     parser.error(f"{args.l} does not exist")
   if args.x is not None and not os.path.isfile(args.x):
     parser.error(f"{args.x} does not exist")
+  if args.custom_dylib is not None and not os.path.isfile(args.custom_dylib):
+    parser.error(f"{args.custom_dylib} does not exist")
   if args.f is not None:
     fake = [f for f in args.f if not os.path.exists(f)]
 
@@ -165,6 +167,9 @@ def generate_cyan(parser: argparse.ArgumentParser) -> None:
 
     if args.x:
       zf.write(args.x, "new.entitlements")
+    
+    if args.custom_dylib and args.patch.plugins:
+      zf.write(args.custom_dylib, f"custom_dylib/{os.path.basename(args.custom_dylib)}")
 
 
 if __name__ == "__main__":
