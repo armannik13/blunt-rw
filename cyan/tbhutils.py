@@ -58,9 +58,9 @@ def validate_inputs(args: Namespace) -> Optional[str]:
     # i would've modified args.f directly, but it causes type-hinting error :(
     args.f = new
   
-  if args.patch_plugins is not None:
-    if isinstance(args.patch_plugins, str):
-      for dylib in [args.patch_plugins]:
+  if args.custom_dylib is not None:
+    if isinstance(args.custom_dylib, str):
+      for dylib in [args.custom_dylib]:
         if dylib[-1] == "/":  # yeah this is stupid
           dylib = dylib[:-1]
 
