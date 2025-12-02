@@ -227,25 +227,22 @@ class MainExecutable(Executable):
     FRAMEWORKS_DIR = f"{self.bundle_path}/Frameworks"
     PLUGINS_DIR = f"{self.bundle_path}/PlugIns"
     if isinstance(dylib, str):
-      dylib_source = f"{dylib}"
+      dylib_source = dylib if dylib.endswith(".dylib") else f"{dylib}.dylib"
     else:
       dylib_source = f"{self.install_dir}/extras/zxPluginsInject.dylib"
     dylib_name = os.path.basename(dylib_source)
     to_inject = f"@rpath/{dylib_name}"
     path = shutil.copy2(dylib_source, tmpdir)
-    fpath = f"{FRAMEWORKS_DIR}/{dylib_name}"
+    fpath = os.path.join(FRAMEWORKS_DIR, dylib_name)
     shutil.move(path, fpath)
 
     targets = [self.path]
 
-    if os.path.isdir(PLUGINS_DIR):
-      for item in os.listdir(PLUGINS_DIR):
-        if item.endswith(".appex"):
-          appex_path = os.path.join(PLUGINS_DIR, item)
-          binary_name = item[:-6]
-          binary_path = os.path.join(appex_path, binary_name)
-          if os.path.isfile(binary_path):
-            targets.append(binary_path)
+    for item in os.listdir(PLUGINS_DIR):
+      if item.endswith(".appex"):
+        binary_path = os.path.join(PLUGINS_DIR, item, item[:-6])
+        if os.path.isfile(binary_path):
+          targets.append(binary_path)
 
     if targets:
       injected_count = 0
@@ -257,11 +254,8 @@ class MainExecutable(Executable):
           self.inj_func(to_inject, target)
           injected_count += 1
       if injected_count == 0:
-        print("[?] all plugins were already patched")
+        print("[?] all items already patched")
       else:
-        if isinstance(dylib, str):
-          print(f"[*] patched \033[96m{injected_count}\033[0m plugin(s) with {dylib_name}")
-        else:
-          print(f"[*] patched \033[96m{injected_count}\033[0m plugin(s)")
+        print(f"[*] patched \033[96m{injected_count}\033[0m items(s) with {dylib_name}")
     else:
-      print("[?] no plugins found to patch")
+      print("[?] no items found to patch")
