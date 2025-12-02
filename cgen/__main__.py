@@ -137,6 +137,9 @@ def generate_cyan(parser: argparse.ArgumentParser) -> None:
     if key in real_args:
       real_args[key] = True
 
+  if "custom_dylib" in real_args and not args.patch_plugins:
+    del real_args["custom_dylib"]
+
   print("[*] generating..")
   with zipfile.ZipFile(
       args.output, "w", zipfile.ZIP_DEFLATED, compresslevel=1
@@ -168,7 +171,7 @@ def generate_cyan(parser: argparse.ArgumentParser) -> None:
     if args.x:
       zf.write(args.x, "new.entitlements")
     
-    if args.custom_dylib and args.patch_plugins:
+    if args.custom_dylib and args.patch.plugins:
       zf.write(args.custom_dylib, f"custom_dylib/{os.path.basename(args.custom_dylib)}")
 
 
