@@ -234,9 +234,11 @@ class MainExecutable(Executable):
     path = shutil.copy2(dylib_source, tmpdir)
     if inject_to_path:
       location = f"@executable_path/{dylib_name}"
+      old_location = f"@rpath/{dylib_name}"
       fpath = os.path.join(self.bundle_path, dylib_name)
     else:
       location = f"@rpath/{dylib_name}"
+      old_location = f"@executable_path/{dylib_name}"
       fpath = os.path.join(FRAMEWORKS_DIR, dylib_name)
     shutil.move(path, fpath)
 
@@ -248,18 +250,18 @@ class MainExecutable(Executable):
         if os.path.isfile(binary_path):
           targets.append(binary_path)
 
-    if targets:
-      count = 0
-      for target in targets:
-        if self.is_dylib_already_injected(target, dylib_name):
-          print(f"[?] {os.path.basename(target)} already patched")
-          continue
-        else:
-          self.inj_func(location, target)
-          count += 1
-      if count == 0:
-        print("[?] all items already patched")
+    count = 0
+    for target in targets:
+      if self.is_dylib_already_injected(target, old_location):
+        self.change_dependency(old_location, location, target)
+        count += 1
+      elif not self.is_dylib_already_injected(target, location):
+        self.inj_func(location, target)
+        count += 1
       else:
-        print(f"[*] patched \033[96m{count}\033[0m items(s) with {dylib_name}")
+        print(f"[?] {os.path.basename(target)} already patched")
+        continue
+    if count == 0:
+      print("[?] all items already patched")
     else:
-      print("[?] no items found to patch")
+      print(f"[*] patched \033[96m{count}\033[0m item(s) with {dylib_name}")
