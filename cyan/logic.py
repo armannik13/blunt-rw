@@ -55,8 +55,8 @@ def main(parser: ArgumentParser) -> None:
       app.remove_encrypted_extensions()
 
     if args.f is not None:
-      app.executable.inject(args.f, tmpdir, args.inject_to_path, args.custom_path)
-    if args.patch_plugins is not None:
+      app.executable.inject(args.f, tmpdir, args.inject_to_path, args.custom_path, args.no_defualt_dependencies)
+    if args.patch_plugins:
       app.executable.patch_plugins(tmpdir, args.inject_to_path, args.custom_dylib)
     if args.n is not None:
       app.plist.change_name(args.n)
