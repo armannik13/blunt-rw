@@ -239,10 +239,12 @@ class MainExecutable(Executable):
       location = f"@executable_path/{dylib_name}"
       old_location = f"@rpath/{dylib_name}"
       fpath = os.path.join(self.bundle_path, dylib_name)
+      old_fpath = os.path.join(FRAMEWORKS_DIR, dylib_name)
     else:
       location = f"@rpath/{dylib_name}"
       old_location = f"@executable_path/{dylib_name}"
       fpath = os.path.join(FRAMEWORKS_DIR, dylib_name)
+      old_fpath = os.path.join(self.bundle_path, dylib_name)
     shutil.move(path, fpath)
 
     targets = [self.path]
@@ -257,6 +259,8 @@ class MainExecutable(Executable):
     for target in targets:
       if self.is_dylib_already_injected(target, old_location) and not self.is_dylib_already_injected(target, location):
         self.change_dependency(old_location, location, target)
+        if os.path.isfile(old_fpath):
+          os.remove(old_fpath)
         count += 1
       elif not self.is_dylib_already_injected(target, location):
         self.inj_func(location, target)
