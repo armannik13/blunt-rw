@@ -87,9 +87,9 @@ class Executable:
     )
 
   def fix_common_dependencies(self, needed: set[str], no_defualt_dependencies: bool = False) -> None:
-    self.remove_signature()
-  
     if not no_defualt_dependencies:
+      self.remove_signature()
+  
       for dep in self.get_dependencies():
         for common, info in self.common.items():
           if common in dep.lower():
