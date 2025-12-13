@@ -263,7 +263,7 @@ class MainExecutable(Executable):
       if not b:
         if a:
           if target is self.path:
-            if found_dylib is not None and a == found_dylib:
+            if a == found_dylib:
               self.change_dependency(old_location, location, target)
               count += 1
               if os.path.isfile(old_fpath):
