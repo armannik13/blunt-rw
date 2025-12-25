@@ -295,7 +295,7 @@ class MainExecutable(Executable):
       else:
         if (dylib_name in arg_f_dict and target == self.path):
           count += 1
-          continue
-        print(f"[?] {os.path.basename(target)} already patched")
+        else:
+          print(f"[?] {os.path.basename(target)} already patched")
     if count > 0:
       print(f"[*] patched \033[96m{count}\033[0m item(s) with {dylib_name}")
