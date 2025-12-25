@@ -280,7 +280,9 @@ class MainExecutable(Executable):
       b = self.is_dylib_already_injected(target, location)
       if not b:
         if a and ((target == self.path and a == found_dylib) or (target != self.path)):
+          self.remove_signature(target)
           self.change_dependency(old_location, location, target)
+          self.sign_plugin(target)
           count += 1
           if os.path.isfile(old_fpath):
             os.remove(old_fpath)
