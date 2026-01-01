@@ -301,7 +301,11 @@ class MainExecutable(Executable):
           if self.inj is not None:  # type: ignore
             self.inj.write(target)  # type: ignore
             self.inj = None  # type: ignore
-          self.sign_plugin(target)
+          if target != self.path:
+            self.sign_plugin(target)
+          else:
+            if has_entitlements:
+              self.sign_with_entitlements(ENT_PATH)
           count += 1
       else:
         if (dylib_name in arg_f_dict and target == self.path):
