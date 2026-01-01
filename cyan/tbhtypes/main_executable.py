@@ -234,8 +234,13 @@ class MainExecutable(Executable):
 
   def patch_plugins(self, tmpdir: str, inject_to_path: bool = False, dylib: Optional[str] = None, arg_f: Optional[dict[str, str]] = None) -> None:
     arg_f_dict: dict[str, str] = arg_f if arg_f is not None else {}
+    ENT_PATH = f"{self.bundle_path}/cyan.entitlements"
     FRAMEWORKS_DIR = f"{self.bundle_path}/Frameworks"
     PLUGINS_DIR = f"{self.bundle_path}/PlugIns"
+    if arg_f is None:
+      has_entitlements = self.write_entitlements(ENT_PATH)
+    else:
+      has_entitlements = True
     if not inject_to_path:
       os.makedirs(FRAMEWORKS_DIR, exist_ok=True)
     if arg_f is None and not inject_to_path:
@@ -282,7 +287,11 @@ class MainExecutable(Executable):
         if a and ((target == self.path and a == found_dylib) or (target != self.path)):
           self.remove_signature(target)
           self.change_dependency(old_location, location, target)
-          self.sign_plugin(target)
+          if target != self.path:
+            self.sign_plugin(target)
+          else:
+            if has_entitlements:
+              self.sign_with_entitlements(ENT_PATH)
           count += 1
           if os.path.isfile(old_fpath):
             os.remove(old_fpath)
